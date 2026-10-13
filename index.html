@@ -1,0 +1,235 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ahmedabad NO₂ and population exposure, 2020</title>
+<meta name="description" content="Google Earth Engine analysis of Sentinel-5P tropospheric NO2 over Ahmedabad in 2020 and the male and female population living in the highest-NO2 quartile (WorldPop).">
+<style>
+:root{--bg:#fbfaf7;--fg:#1d2327;--mut:#5d676e;--card:#fff;--line:#e3e0d8;--acc:#b4410f;--acc2:#1f6f78}
+@media (prefers-color-scheme:dark){:root{--bg:#14181b;--fg:#e8eaeb;--mut:#9aa5ab;--card:#1c2226;--line:#2d363b;--acc:#ff8a54;--acc2:#5cc3cd}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font:17px/1.65 Georgia,"Times New Roman",serif}
+header.top{position:sticky;top:0;z-index:10;background:var(--bg);border-bottom:1px solid var(--line);display:flex;gap:1.2rem;align-items:center;padding:.7rem 1.2rem;flex-wrap:wrap;font-family:system-ui,sans-serif;font-size:.9rem}
+header.top b{margin-right:auto}
+header.top a{color:var(--mut);text-decoration:none}header.top a:hover{color:var(--acc)}
+main{max-width:980px;margin:0 auto;padding:0 1.2rem 4rem}
+h1{font-size:clamp(2rem,5vw,3.2rem);line-height:1.12;margin:.3rem 0 1rem}
+h2{font-size:1.6rem;margin:3rem 0 .6rem;border-top:1px solid var(--line);padding-top:1.4rem}
+.kicker{font-family:system-ui,sans-serif;text-transform:uppercase;letter-spacing:.08em;font-size:.78rem;color:var(--acc);margin-top:2.5rem}
+.lede{font-size:1.15rem;color:var(--mut);max-width:44em}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:1rem;margin:2rem 0}
+.stat{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:1rem}
+.stat strong{display:block;font:700 1.9rem system-ui,sans-serif;color:var(--acc)}
+.stat span{font:.85rem system-ui,sans-serif;color:var(--mut)}
+figure{margin:1.6rem 0;background:var(--card);border:1px solid var(--line);border-radius:10px;padding:1rem}
+figure img{max-width:100%;height:auto;display:block;margin:0 auto}
+figcaption{font:.85rem/1.5 system-ui,sans-serif;color:var(--mut);margin-top:.7rem}
+.ptitle{font:600 .95rem system-ui,sans-serif;margin-bottom:.6rem}
+.legend{max-width:460px;margin:.8rem auto 0;font:.78rem system-ui,sans-serif;color:var(--mut)}
+.legend .bar{height:12px;border-radius:3px;background:linear-gradient(90deg,blue,cyan,green,yellow,orange,red)}
+.legend .ticks{display:flex;justify-content:space-between;margin-top:2px}
+.legend .u{text-align:center;margin-top:2px}
+.sw{display:inline-block;width:12px;height:12px;border-radius:2px;vertical-align:-1px;margin-right:4px}
+.stage{position:relative;width:min(100%,520px);margin:0 auto;aspect-ratio:679/700;background:repeating-conic-gradient(rgba(128,128,128,.10) 0 25%,transparent 0 50%) 0 0/20px 20px;border-radius:6px;overflow:hidden}
+.stage img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain}
+.ctrl{display:flex;gap:.8rem;align-items:center;margin:.9rem auto 0;max-width:520px;font-family:system-ui,sans-serif}
+.ctrl input[type=range]{flex:1}
+button,select{font:.9rem system-ui,sans-serif;padding:.35rem .8rem;border-radius:6px;border:1px solid var(--line);background:var(--card);color:var(--fg);cursor:pointer}
+.mlabel{font:700 1rem system-ui,sans-serif;min-width:4.5em}
+.swipe-wrap{position:relative}
+.swipe-wrap .top{clip-path:inset(0 50% 0 0)}
+.divider{position:absolute;top:0;bottom:0;left:50%;width:2px;background:#fff;box-shadow:0 0 3px #000}
+.tag{position:absolute;top:8px;font:700 .8rem system-ui,sans-serif;background:rgba(0,0,0,.65);color:#fff;padding:2px 8px;border-radius:4px}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:1rem}
+@media(max-width:700px){.row2{grid-template-columns:1fr}}
+table{width:100%;border-collapse:collapse;font:.9rem system-ui,sans-serif;margin:1rem 0}
+th,td{text-align:right;padding:.5rem .6rem;border-bottom:1px solid var(--line)}th:first-child,td:first-child{text-align:left}
+th{color:var(--mut);font-weight:600}
+.limits{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:1rem}
+.limits div{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:.9rem 1rem;font-size:.95rem}
+.limits b{display:block;font-family:system-ui,sans-serif;color:var(--acc2);margin-bottom:.2rem}
+.dl a{display:inline-block;margin:.3rem .5rem .3rem 0;padding:.5rem .9rem;border:1px solid var(--acc);border-radius:6px;color:var(--acc);text-decoration:none;font:.9rem system-ui,sans-serif}
+a{color:var(--acc2)}
+code{font-size:.88em;background:var(--card);border:1px solid var(--line);padding:0 .3em;border-radius:4px}
+.note{font:.85rem/1.5 system-ui,sans-serif;color:var(--mut);border-left:3px solid var(--acc);padding-left:.8rem;margin:1rem 0}
+.bars .r{display:grid;grid-template-columns:70px 1fr 110px;gap:.6rem;align-items:center;margin:.5rem 0;font:.9rem system-ui,sans-serif}
+.bars .b{height:22px;border-radius:4px;background:var(--line);overflow:hidden}.bars .b i{display:block;height:100%}
+footer{text-align:center;color:var(--mut);font:.85rem system-ui,sans-serif;padding:2rem 1rem;border-top:1px solid var(--line)}
+</style>
+</head>
+<body>
+<header class="top">
+<b>Ahmedabad · Sentinel-5P</b>
+<a href="#maps">Maps</a><a href="#dynamic">Animation</a><a href="#exposure">Exposure</a><a href="#discussion">Discussion</a><a href="#methods">Methods</a>
+</header>
+<main>
+
+<div class="kicker">Question 2 · Google Earth Engine urban analysis</div>
+<h1>Over half of Ahmedabad’s residents live where satellite NO₂ is highest.</h1>
+<p class="lede">Sentinel-5P tropospheric NO₂ for 2020 was composited over the Ahmedabad Urban Local Body boundary. The top quartile of city pixels was combined with WorldPop 2020 age–sex population to report how many men and women reside in areas with relatively high satellite-observed NO₂.</p>
+
+<div class="stats">
+<div class="stat"><strong>72.5</strong><span>city-wide mean NO₂ column in 2020 (µmol/m²)</span></div>
+<div class="stat"><strong>81.2</strong><span>75th-percentile threshold defining “relatively high” (µmol/m²)</span></div>
+<div class="stat"><strong>3.19 M</strong><span>residents in the highest-NO₂ quartile of pixels</span></div>
+<div class="stat"><strong>52.1%</strong><span>of the 6.12 M modelled population (men 52.14%, women 52.13%)</span></div>
+</div>
+
+<h2 id="maps">Spatial pattern of NO₂ in 2020</h2>
+<p>All maps use one fixed 0–200 µmol/m² colour scale (tropospheric NO₂ vertical column), so months and annual values are directly comparable. The white outline is the city boundary.</p>
+
+<figure id="figMean" data-optional>
+<div class="ptitle">Ahmedabad: 2020 mean tropospheric NO₂ column</div>
+<img src="assets/ahmedabad_no2_mean_2020.png" alt="Map of 2020 mean tropospheric NO2 over Ahmedabad" onerror="this.closest('figure').style.display='none'">
+<div class="legend"><div class="bar"></div><div class="ticks"><span>0</span><span>40</span><span>80</span><span>120</span><span>160</span><span>200</span></div><div class="u">µmol/m² (S5P OFFL L3, ~1 km grid, mean of all 2020 scenes)</div></div>
+<figcaption>Annual mean of 5,178 Sentinel-5P OFFL scenes intersecting the city. City-wide mean 72.5 µmol/m², range 46.7–91.6 µmol/m².</figcaption>
+</figure>
+
+<figure id="figQ4" data-optional>
+<div class="ptitle">Highest-NO₂ quartile (≥ 81.2 µmol/m²) over the 2020 mean</div>
+<img src="assets/ahmedabad_no2_q4_2020.png" alt="Map showing the highest quartile of NO2 pixels in Ahmedabad" onerror="this.closest('figure').style.display='none'">
+<div class="legend"><div class="bar"></div><div class="ticks"><span>0</span><span>40</span><span>80</span><span>120</span><span>160</span><span>200</span></div><div class="u">µmol/m² · <span class="sw" style="background:#ff00ff"></span>highest quartile (130 pixels, one contiguous zone)</div></div>
+<figcaption>The top-quartile mask forms one connected zone (one polygon after vectorisation at 1 km).</figcaption>
+</figure>
+
+<figure>
+<div class="ptitle">Selected months: January, April, August and December 2020</div>
+<img src="assets/ahmedabad_no2_seasonal_panels.png" alt="Four maps of monthly mean NO2 over Ahmedabad for January, April, August and December 2020">
+<figcaption>Same 0–200 µmol/m² scale in every panel. Blank patches in August are pixels without valid retrievals (cloud during the monsoon).</figcaption>
+</figure>
+
+<h2 id="dynamic">Dynamic temporal outputs</h2>
+<p>Twelve monthly mean composites (January–December 2020) are shown three ways: an animated GIF, a month slider and a before–after swipe.</p>
+
+<figure>
+<div class="ptitle">Animated GIF · monthly mean NO₂, 2020</div>
+<div class="stage"><img src="assets/Ahmedabad_NO2_2020.gif" alt="Animated GIF of monthly NO2 over Ahmedabad in 2020"></div>
+<div class="legend"><div class="bar"></div><div class="ticks"><span>0</span><span>40</span><span>80</span><span>120</span><span>160</span><span>200</span></div><div class="u">µmol/m² · frames run January → December at 2 frames per second</div></div>
+<figcaption><a href="assets/Ahmedabad_NO2_2020.gif">Open GIF full size</a></figcaption>
+</figure>
+
+<figure>
+<div class="ptitle">Month slider</div>
+<div class="stage"><img id="slideImg" src="assets/frames/m01.png" alt="Monthly NO2 map"></div>
+<div class="ctrl"><button id="play">▶ Play</button><input id="slider" type="range" min="1" max="12" value="1" aria-label="Month"><span class="mlabel" id="mlab">Jan 2020</span></div>
+<div class="legend"><div class="bar"></div><div class="ticks"><span>0</span><span>40</span><span>80</span><span>120</span><span>160</span><span>200</span></div><div class="u">µmol/m²</div></div>
+</figure>
+
+<figure>
+<div class="ptitle">Before–after swipe</div>
+<div class="ctrl" style="margin:0 auto .8rem;justify-content:center">
+<label>Left <select id="selA"></select></label><label>Right <select id="selB"></select></label>
+</div>
+<div class="stage swipe-wrap" id="swipe">
+<img id="imgB" src="assets/frames/m12.png" alt="Right month">
+<img id="imgA" class="top" src="assets/frames/m04.png" alt="Left month">
+<div class="divider" id="div"></div><span class="tag" id="tagA" style="left:8px"></span><span class="tag" id="tagB" style="right:8px"></span>
+</div>
+<div class="ctrl"><input id="swipeR" type="range" min="0" max="100" value="50" aria-label="Swipe position"></div>
+<div class="legend"><div class="bar"></div><div class="ticks"><span>0</span><span>40</span><span>80</span><span>120</span><span>160</span><span>200</span></div><div class="u">µmol/m² · default compares April (lockdown) with December</div></div>
+</figure>
+
+<h3 style="font-family:system-ui,sans-serif">Monthly city-wide mean</h3>
+<figure>
+<svg id="chart" viewBox="0 0 700 300" width="100%" role="img" aria-label="Monthly mean NO2 over Ahmedabad in 2020"></svg>
+<figcaption id="chartNote"></figcaption>
+</figure>
+
+<h2 id="exposure">Population in the highest-NO₂ quartile</h2>
+<p>“Relatively high” is defined by a transparent city-specific rule: pixels in the top quartile (≥ the 75th percentile, 81.2 µmol/m²) of the 2020 mean NO₂ composite inside the boundary. The mask was applied to WorldPop 2020 male and female population (100 m) and summed.</p>
+
+<table>
+<thead><tr><th>Group</th><th>City population</th><th>In highest-NO₂ quartile</th><th>% of group</th><th>Share of quartile population</th></tr></thead>
+<tbody>
+<tr><td>Male</td><td>3,231,278</td><td>1,684,826</td><td>52.14%</td><td>52.80%</td></tr>
+<tr><td>Female</td><td>2,889,152</td><td>1,506,097</td><td>52.13%</td><td>47.20%</td></tr>
+<tr><td><b>All</b></td><td><b>6,120,431</b></td><td><b>3,190,923</b></td><td><b>52.14%</b></td><td>100%</td></tr>
+</tbody></table>
+
+<figure>
+<div class="ptitle">Share of each group living in the highest-NO₂ quartile</div>
+<div class="bars">
+<div class="r"><span>Male</span><div class="b"><i style="width:52.14%;background:var(--acc2)"></i></div><span>52.14%</span></div>
+<div class="r"><span>Female</span><div class="b"><i style="width:52.13%;background:var(--acc)"></i></div><span>52.13%</span></div>
+</div>
+<figcaption>Bars run from 0 to 100% of each group’s city population.</figcaption>
+</figure>
+
+<div class="row2">
+<figure id="figM" data-optional>
+<div class="ptitle">Male population per 100 m cell</div>
+<img src="assets/ahmedabad_male_population.png" alt="Male population map" onerror="this.closest('figure').style.display='none'">
+<div class="legend"><div class="bar" style="background:linear-gradient(90deg,white,yellow,red);border:1px solid var(--line)"></div><div class="ticks"><span>0</span><span>50</span><span>100+</span></div><div class="u">people per 100 m cell (WorldPop 2020)</div></div>
+</figure>
+<figure id="figF" data-optional>
+<div class="ptitle">Female population per 100 m cell</div>
+<img src="assets/ahmedabad_female_population.png" alt="Female population map" onerror="this.closest('figure').style.display='none'">
+<div class="legend"><div class="bar" style="background:linear-gradient(90deg,white,yellow,red);border:1px solid var(--line)"></div><div class="ticks"><span>0</span><span>50</span><span>100+</span></div><div class="u">people per 100 m cell (WorldPop 2020)</div></div>
+</figure>
+</div>
+
+<div class="note">These figures count people residing in areas with relatively high <em>satellite-observed</em> NO₂ columns. They are not individual or ground-level personal exposure.</div>
+
+<h2 id="discussion">Discussion</h2>
+<p><b>Spatial pattern.</b> NO₂ is not spread evenly. In the 2020 mean, values are lowest toward the northern and eastern margins and highest across the central-western and southern core, and the top quartile forms a single connected zone. The January and December panels show the same shape at higher intensity, with a clear core-to-edge gradient. Even so, the whole city lies in a narrow band (46.7–91.6 µmol/m²) because each Sentinel-5P pixel is several kilometres wide and smooths local sources such as traffic corridors and industry.</p>
+<p><b>Temporal pattern.</b> The monthly maps show a strong seasonal cycle. Values are highest in the winter months (November–February), fall steeply in March–April and stay low through the monsoon (roughly June–September), then rebuild from October. April and May are the lowest months, which coincides with India’s national COVID-19 lockdown from late March 2020. The seasonal chart cannot separate lockdown effects from normal seasonality (monsoon rain, wind, a deeper winter boundary layer and longer NO₂ lifetime in winter), so the drop should be described as consistent with reduced activity rather than caused by it.</p>
+<p><b>Exposure pattern.</b> Roughly a quarter of the city’s area, by construction, holds 52.1% of its modelled residents (3.19 million of 6.12 million). The densest part of the city therefore coincides with its highest NO₂ columns. The sex split is almost identical: 52.14% of men and 52.13% of women live in the high-NO₂ zone, and men make up 52.8% of the zone’s population, the same as their share citywide (modelled ratio of about 1,118 men per 1,000 women). On this evidence the high-NO₂ zone does not differ by sex; differences would require finer, non-modelled data.</p>
+
+<h2 id="methods">Method, sources and limitations</h2>
+<p><b>Boundary.</b> The Ahmedabad ULB polygons come from the Indian Urban Local Body (SBM) boundary file <code>SBM_ULBs.geojsonl</code>. Features whose <code>ulbnm</code> contains “Ahmedabad” were selected. This returns two polygons, the main ULB (code 802484) and the small Ahmedabad Cantonment polygon (802483), and both are used. The result was reprojected to EPSG:4326 and converted to an Earth Engine FeatureCollection with <code>geemap.geopandas_to_ee</code>.</p>
+<p><b>NO₂.</b> <code>COPERNICUS/S5P/OFFL/L3_NO2</code>, band <code>tropospheric_NO2_column_number_density</code>, filtered to the boundary and 1 Jan–1 Jan 2021 (5,178 scenes). Monthly composites are per-pixel means over each calendar month, and the annual composite is the mean of all scenes. Values were multiplied by 10⁶ to show µmol/m² (the dataset unit is mol/m²). The same 0–200 µmol/m² scale is used throughout. Statistics use a 1 km reduction scale.</p>
+<p><b>Population.</b> <code>WorldPop/GP/100m/pop_age_sex</code> for 2020 (mosaic of 4 tiles). Male bands <code>M_0…M_80</code> and female bands <code>F_0…F_80</code> were summed separately, clipped to the boundary, masked to the top-quartile NO₂ zone and summed at 100 m.</p>
+
+<div class="limits">
+<div><b>Spatial resolution</b>Sentinel-5P pixels are about 5.5 × 3.5 km (resampled to a ~1 km grid in Earth Engine). Local hotspots are averaged away, and the 100 m population grid is overlaid on a much coarser NO₂ grid.</div>
+<div><b>Temporal resolution &amp; clouds</b>One overpass per day (about 13:30 local time). Cloud, especially in the monsoon, removes retrievals, so monthly means rest on different numbers of scenes. August shows visible gaps.</div>
+<div><b>Column, not ground level</b>The measure is a tropospheric vertical column. It is related to, but is not, surface concentration or personal exposure.</div>
+<div><b>Quality filtering</b>The Earth Engine L3 product was used as ingested; no extra <code>qa_value</code> mask was applied in this notebook, so low-quality retrievals could remain in some scenes.</div>
+<div><b>Modelled population</b>WorldPop is a statistical disaggregation of census data, not a count, and age–sex splits are modelled. The boundary and population surface do not coincide perfectly.</div>
+<div><b>Relative threshold</b>The top quartile is relative to Ahmedabad itself: by construction a quarter of pixels qualify, and the cut-off (81.2 µmol/m²) is not a health standard. Results cannot be compared with other cities directly.</div>
+</div>
+
+<p style="margin-top:2rem"><b>Data:</b> Copernicus Sentinel-5P OFFL L3 NO₂ via Google Earth Engine; WorldPop Global Project 100 m age–sex (2020); Indian Urban Local Body boundaries (SBM). Analysis in Python with <code>earthengine-api</code>, <code>geemap</code> and <code>geopandas</code>.</p>
+<div class="dl">
+<a href="downloads/ahmedabad_no2_population_exposure.csv">Download exposure statistics (CSV)</a>
+<a href="downloads/monthly_no2_means.csv">Download monthly NO₂ means (CSV)</a>
+<a href="UISA_QUESTION2.ipynb">Download notebook</a>
+</div>
+</main>
+<footer>Question 2 · Individual Google Earth Engine Urban Analysis · Ahmedabad, India</footer>
+
+<script>
+const MON=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+const fr=n=>`assets/frames/m${String(n).padStart(2,'0')}.png`;
+// slider
+const sl=document.getElementById('slider'),si=document.getElementById('slideImg'),ml=document.getElementById('mlab'),pb=document.getElementById('play');
+let timer=null;
+function show(n){si.src=fr(n);ml.textContent=MON[n-1]+' 2020';sl.value=n}
+sl.oninput=()=>show(+sl.value);
+pb.onclick=()=>{if(timer){clearInterval(timer);timer=null;pb.textContent='▶ Play'}else{pb.textContent='❚❚ Pause';timer=setInterval(()=>show(+sl.value%12+1),600)}};
+// swipe
+const A=document.getElementById('selA'),B=document.getElementById('selB'),iA=document.getElementById('imgA'),iB=document.getElementById('imgB');
+MON.forEach((m,i)=>{A.add(new Option(m+' 2020',i+1));B.add(new Option(m+' 2020',i+1))});A.value=4;B.value=12;
+function upd(){iA.src=fr(A.value);iB.src=fr(B.value);tagA.textContent=MON[A.value-1];tagB.textContent=MON[B.value-1]}
+A.onchange=B.onchange=upd;upd();
+swipeR.oninput=()=>{const v=swipeR.value;iA.style.clipPath=`inset(0 ${100-v}% 0 0)`;document.getElementById('div').style.left=v+'%'};
+// monthly chart: reads exact CSV if present, else approximate values digitised from the GIF
+let data=[92,99,79,34,34,53,40,40,40,86,90,119],exact=false;
+function draw(){
+ const s=document.getElementById('chart'),W=700,H=300,l=50,r=15,t=15,b=35,max=140;
+ let h='';
+ for(let y=0;y<=max;y+=35){const Y=t+(H-t-b)*(1-y/max);h+=`<line x1="${l}" x2="${W-r}" y1="${Y}" y2="${Y}" stroke="currentColor" opacity=".15"/><text x="${l-6}" y="${Y+4}" text-anchor="end" font-size="11" fill="currentColor" opacity=".7">${y}</text>`}
+ const bw=(W-l-r)/12;
+ data.forEach((v,i)=>{const bh=(H-t-b)*v/max,x=l+i*bw+6;h+=`<rect x="${x}" y="${H-b-bh}" width="${bw-12}" height="${bh}" rx="3" fill="${v>=81.2?'#b4410f':'#1f6f78'}"/><text x="${x+(bw-12)/2}" y="${H-b+16}" text-anchor="middle" font-size="11" fill="currentColor" opacity=".8">${MON[i]}</text>`});
+ h+=`<text x="12" y="${H/2}" transform="rotate(-90 12 ${H/2})" text-anchor="middle" font-size="11" fill="currentColor" opacity=".7">NO₂ column (µmol/m²)</text>`;
+ s.innerHTML=h;
+ document.getElementById('chartNote').innerHTML=(exact?'City-wide monthly mean of tropospheric NO₂ (µmol/m²) from Earth Engine.':'<b>Approximate values</b> read back from the colours of the animation frames (typically ±10 µmol/m²); replace with the exact table by adding <code>downloads/monthly_no2_means.csv</code>.')+' Orange bars exceed the 81.2 µmol/m² city threshold.';
+}
+draw();
+fetch('downloads/monthly_no2_means.csv').then(r=>r.ok?r.text():Promise.reject()).then(t=>{
+ const rows=t.trim().split('\n').slice(1).map(x=>x.split(','));
+ if(rows.length===12){data=rows.map(r=>+r[1]);exact=true;draw()}}).catch(()=>{});
+</script>
+</body>
+</html>
